@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Screening Tool</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to right, #6a11cb, #2575fc);
+            color: white;
+        }
+        .upload-section {
+            margin-bottom: 20px;
+        }
+        .resume-list {
+            margin-top: 20px;
+        }
+        .resume-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            color: black;
+        }
+        #resumeForm {
+            display: flex;
+            flex-direction: column;
+            width: 50svw;
+            margin: auto;
+        }
+        h2 {
+            font-size: 28px;
+        }
+
+        p {
+            font-size: 18px;
+        }
+
+        .input-group {
+            margin: 0 auto;
+        }
+
+        label {
+            cursor: pointer;
+        }
+
+        .list-group-item {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .modal-body {
+            background-color: #343a40;
+            color: white;
+        }
+
+        .modal-content {
+            border-radius: 10px;
+        }
+
+        .input-group-text {
+            flex: 1;
+        }
+
+        .btn-sm {
+            width: 120px;
+            margin: 0 5px;
+            background-color: #6a11cb;
+        }
+
+        textarea {
+            border-radius: 24px;
+            padding: 32px 16px;
+            margin-bottom: 32px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="text-center mt-5">
+        <h2 class="font-weight-bold mb-4">AI-Powered Resume Screening Tool</h2>
+        <p class="lead mb-4">Effortlessly analyze and screen resumes using advanced AI technology.</p>
+        <p class="mb-4">Simply upload your resume in PDF format to get started!</p>
+
+        <form id="resumeForm" method="post" enctype="multipart/form-data">
+            <label for="jobDescription">Job Description:</label>
+            <textarea id="jobDescription" name="jobDescription" rows="4" cols="50" placeholder="Enter the job description here..."></textarea>
+        
+            <div class="container">
+                <label for="pdfUpload">Upload Resumes:</label>
+                <input type="file" id="pdfUpload" name="pdf" multiple accept=".pdf">
+            
+                <button type="submit" class="btn-sm">Submit</button>
+            </div>
+        </form>
+
+        <div class="bg-primary text-white p-3 mt-4 rounded shadow">
+            <h5 class="mb-3">Uploaded PDF Files:</h5>
+            <ul id="uploaded-files" class="list-group list-group-flush"></ul>
+        </div>
+
+        <div class="bg-white p-4 mt-4 rounded shadow">
+            <div class="resume-list">
+                <h2>Ranked Resumes</h2>
+                <div id="resumeResults"></div>
+            </div>
+        </div>
+
+        <h5 class="mt-4">Why Use Our Tool?</h5>
+        <div class="bg-primary text-white p-4 rounded shadow mb-4">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item bg-transparent border-0">✔️ Fast and efficient resume screening</li>
+                <li class="list-group-item bg-transparent border-0">✔️ AI-driven insights and recommendations</li>
+                <li class="list-group-item bg-transparent border-0">✔️ Easy to use with just a few clicks</li>
+            </ul>
+        </div>
+
+        <footer class="mt-5">
+            <p class="text-muted">&copy; 2024 Resume Screening Tool. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <div class="modal fade" id="alertModal" tabindex="-1" aria-labelledby="alertModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body text-center" id="alertMessage"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('resumeForm').addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData();
+
+        const jobDescription = document.getElementById('jobDescription').value;
+
+        formData.append('jobDescription', jobDescription);
+
+        const files = document.getElementById('pdfUpload').files;
+        for (let file of files) {
+            formData.append('pdf', file);
+        }
+
+        try {
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to upload resumes');
+            }
+
+            const rankedResumes = await response.json();
+
+            displayRankedResumes(rankedResumes);
+            } catch (error) {
+                console.error('Error uploading resumes:', error);
+                alert(`Error: ${error.message}`);
+            }
+        });
+
+        function displayRankedResumes(resumes) {
+            const resultsDiv = document.getElementById('resumeResults');
+            resultsDiv.innerHTML = '';
+
+            resumes.forEach(({ filename, score }, index) => {
+                const resumeItem = document.createElement('div');
+                resumeItem.classList.add('resume-item');
+                resumeItem.innerHTML = `
+                    <strong>Rank #${index + 1}</strong><br>
+                    <strong>Filename:</strong> <a href="/uploads/${filename}" target="_blank">${filename}</a><br>
+                    <strong>Score:</strong> ${score}
+                `;
+                resultsDiv.appendChild(resumeItem);
+            });
+        }
+    </script>
+</body>
+</html>
